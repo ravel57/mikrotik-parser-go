@@ -3,3 +3,4 @@
 /web/dist/
 go.sum
 *.sqlite
+*.tar

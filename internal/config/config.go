@@ -52,9 +52,6 @@ func Load() Config {
 	}
 
 	dsn := os.Getenv("APP_SQLITE_DSN")
-	if dsn == "" {
-		dsn = os.Getenv("APP_PG_DSN")
-	}
 
 	return Config{
 		HTTPPort: port,
