@@ -32,13 +32,13 @@ go run ./cmd/server
 ``` 
 sudo docker build -t mikrotik-parser-go . && \
   sudo docker run --name mikrotik-parser-go \
-  -d --restart unless-stopped \
-  --env export APP_HTTP_PORT=8080 \
-  --env APP_PG_DSN='file:..\..\mikrotik_parser.sqlite?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)' \
-  --env APP_MIKROTIK_ADDR='192.168.88.1:8728' \
-  --env APP_MIKROTIK_USER='admin' \
-  --env APP_MIKROTIK_PASSWORD='password' \
-  --env APP_IGNORE_VPN_LIST='ignoreVpn' \
-  --env APP_COLLECT_SECONDS=10 \
+  d --restart unless-stopped \
+  -e APP_HTTP_PORT=8080 \
+  -e APP_SQLITE_DSN='file:..\..\mikrotik_parser.sqlite?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)' \
+  -e APP_MIKROTIK_ADDR='192.168.88.1:8728' \
+  -e APP_MIKROTIK_USER='admin' \
+  -e APP_MIKROTIK_PASSWORD='password' \
+  -e APP_IGNORE_VPN_LIST='ignoreVpn' \
+  -e APP_COLLECT_SECONDS=10 \
   -p 8080:8080 mikrotik-parser-go
 ```
