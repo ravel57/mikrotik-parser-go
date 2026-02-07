@@ -1,0 +1,8 @@
+docker buildx create --use --name mbuilder 2>$null
+docker buildx use mbuilder
+docker buildx build --no-cache --platform linux/arm64 -t mikapp:latest --load .
+docker save -o ./mikapp-arm64.tar mikapp:latest
+
+skopeo copy --format v2s2 \
+oci-archive:./mikrotik-parser-go/mikapp-arm64.tar \
+docker-archive:./mikapp-arm64-docker.tar:mikapp:latest
