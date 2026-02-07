@@ -11,7 +11,7 @@ RUN ["yarn", "build"]
 FROM --platform=$BUILDPLATFORM golang:1.25.6-alpine AS build
 WORKDIR /app
 RUN apk add --no-cache ca-certificates git
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=nodejs /usr/src/node/mikrotik_parser/dist /app/web/dist
