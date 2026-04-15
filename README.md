@@ -34,7 +34,7 @@ sudo docker build -t mikrotik-parser-go . && \
 sudo docker run --name mikrotik-parser-go \
   -d --restart unless-stopped \
   -e APP_HTTP_PORT=8080 \
-  -e APP_SQLITE_DSN='file:.\mikrotik_parser.sqlite?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)' \
+  -e APP_SQLITE_DSN='file:./mikrotik_parser.sqlite?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)' \
   -e APP_MIKROTIK_ADDR='192.168.88.1:8728' \
   -e APP_MIKROTIK_USER='admin' \
   -e APP_MIKROTIK_PASSWORD='password' \
