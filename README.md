@@ -3,7 +3,7 @@
 ## Env
 ```bash
 export APP_HTTP_PORT=8080
-export APP_SQLITE_DSN='file:..\..\mikrotik_parser.sqlite?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)'
+export APP_SQLITE_DSN='file:.\mikrotik_parser.sqlite?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)'
 
 export APP_MIKROTIK_ADDR='192.168.88.1:8728'
 export APP_MIKROTIK_USER='admin'
@@ -41,4 +41,22 @@ sudo docker run --name mikrotik-parser-go \
   -e APP_IGNORE_VPN_LIST='ignoreVpn' \
   -e APP_COLLECT_SECONDS=10 \
   -p 8080:8080 mikrotik-parser-go
+```
+
+### Build for arm v7
+```
+sudo docker buildx build --no-cache \
+  --platform linux/arm/v7 \
+  --output=type=docker \
+  --tag mikrotik-parser:latest . && \
+sudo docker save mikrotik-parser:latest > mikrotik-parser-armv7.tar
+```
+
+### Build for arm 64
+```
+sudo docker buildx build --no-cache \
+  --platform linux/arm64 \
+  --output=type=docker \
+  --tag mikrotik-parser:latest . && \
+sudo docker save mikrotik-parser:latest > mikrotik-parser-arm64.tar
 ```
