@@ -10,6 +10,7 @@ export APP_MIKROTIK_USER='admin'
 export APP_MIKROTIK_PASSWORD='password'
 
 export APP_IGNORE_VPN_LIST='ignoreVpn'
+export APP_IGNORE_LAN_TO_VPN_LIST='ignoreLanToVpn'
 export APP_COLLECT_SECONDS=10
 ```
 
@@ -39,24 +40,41 @@ sudo docker run --name mikrotik-parser-go \
   -e APP_MIKROTIK_USER='admin' \
   -e APP_MIKROTIK_PASSWORD='password' \
   -e APP_IGNORE_VPN_LIST='ignoreVpn' \
+  -e APP_IGNORE_LAN_TO_VPN_LIST='ignoreLanToVpn' \
   -e APP_COLLECT_SECONDS=10 \
   -p 8080:8080 mikrotik-parser-go
 ```
 
 ### Build for arm v7
 ```
-sudo docker buildx build --no-cache \
-  --platform linux/arm/v7 \
-  --output=type=docker \
-  --tag mikrotik-parser:latest . && \
-sudo docker save mikrotik-parser:latest > mikrotik-parser-armv7.tar
+sudo docker buildx create --use --name mbuilder 2>/dev/null || true
+sudo docker buildx use mbuilder
+sudo docker buildx prune -af
+sudo docker buildx build \
+ --no-cache \
+ --pull \
+ --platform linux/arm/v7 \
+ -t mikapp:latest \
+ --load .
+sudo docker save -o ./mikapp-armv7.tar mikapp:latest
+sudo skopeo copy --format v2s2 \
+  docker-archive:./mikapp-armv7.tar \
+  docker-archive:./mikapp-armv7-docker.tar:mikapp:latest
 ```
 
 ### Build for arm 64
 ```
-sudo docker buildx build --no-cache \
-  --platform linux/arm64 \
-  --output=type=docker \
-  --tag mikrotik-parser:latest . && \
-sudo docker save mikrotik-parser:latest > mikrotik-parser-arm64.tar
+sudo docker buildx create --use --name mbuilder 2>/dev/null || true
+sudo docker buildx use mbuilder
+sudo docker buildx prune -af
+sudo docker buildx build \
+ --no-cache \
+ --pull \
+ --platform linux/arm64 \
+ -t mikapp:latest \
+ --load .
+sudo docker save -o ./mikapp-arm64.tar mikapp:latest
+sudo skopeo copy --format v2s2 \
+  oci-archive:./mikapp-arm64.tar \
+  docker-archive:./mikapp-arm64-docker.tar:mikapp:latest
 ```

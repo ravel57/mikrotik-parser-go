@@ -1,8 +1,27 @@
-docker buildx create --use --name mbuilder 2>$null
+### ARM 64 ###
+docker buildx create --use --name mbuilder 2>/dev/null || true
 docker buildx use mbuilder
-docker buildx build --no-cache --platform linux/arm64 -t mikapp:latest --load .
-docker save -o ./mikapp-arm64.tar mikapp:latest
+
+docker buildx build \
+  --no-cache \
+  --platform linux/arm64 \
+  -t mikapp:arm64 \
+  --load .
+
+docker save -o ./mikapp-arm64.tar mikapp:arm64
 
 skopeo copy --format v2s2 \
-oci-archive:./mikrotik-parser-go/mikapp-arm64.tar \
-docker-archive:./mikapp-arm64-docker.tar:mikapp:latest
+  docker-archive:./mikapp-arm64.tar:mikapp:arm64 \
+  docker-archive:./mikapp-arm64-docker.tar:mikapp:latest
+
+
+### ARM v7 ###
+docker buildx build \
+  --no-cache \
+  --platform linux/arm/v7 \
+  -t mikapp:latest \
+  --output type=oci,dest=./mikapp-armv7-oci.tar .
+
+skopeo copy --format v2s2 \
+  oci-archive:./mikapp-armv7-oci.tar \
+  docker-archive:./mikapp-armv7-docker.tar:mikapp:latest

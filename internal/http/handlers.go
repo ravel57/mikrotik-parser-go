@@ -13,13 +13,27 @@ import (
 )
 
 type Handler struct {
-	connections *service.ConnectionsService
-	collect     *service.CollectService
-	staticDir   string
+	connections            *service.ConnectionsService
+	collect                *service.CollectService
+	staticDir              string
+	ignoreVPNListName      string
+	ignoreLanToVpnListName string
 }
 
-func NewHandler(connections *service.ConnectionsService, collect *service.CollectService, staticDir string) *Handler {
-	return &Handler{connections: connections, collect: collect, staticDir: staticDir}
+func NewHandler(
+	connections *service.ConnectionsService,
+	collect *service.CollectService,
+	staticDir string,
+	ignoreVPNListName string,
+	ignoreLanToVpnListName string,
+) *Handler {
+	return &Handler{
+		connections:            connections,
+		collect:                collect,
+		staticDir:              staticDir,
+		ignoreVPNListName:      ignoreVPNListName,
+		ignoreLanToVpnListName: ignoreLanToVpnListName,
+	}
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
@@ -33,6 +47,7 @@ func (h *Handler) Router() http.Handler {
 
 	// API
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/config", h.getConfig)
 		r.Get("/src", h.getSrc)                            // ?srcIp=
 		r.Get("/dns", h.getByDNS)                          // ?find=
 		r.Post("/dns", h.postDNS)                          // ?dns=&enabled=
@@ -75,6 +90,18 @@ func dirExists(p string) bool {
 
 func (h *Handler) serveIndex(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(h.staticDir, "index.html"))
+}
+
+type configResp struct {
+	IgnoreVPNListName      string `json:"ignoreVPNListName"`
+	IgnoreLanToVpnListName string `json:"ignoreLanToVpnListName"`
+}
+
+func (h *Handler) getConfig(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, 200, configResp{
+		IgnoreVPNListName:      h.ignoreVPNListName,
+		IgnoreLanToVpnListName: h.ignoreLanToVpnListName,
+	})
 }
 
 func (h *Handler) getSrc(w http.ResponseWriter, r *http.Request) {

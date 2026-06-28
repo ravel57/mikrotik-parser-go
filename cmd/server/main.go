@@ -43,7 +43,13 @@ func main() {
 
 	go collectSvc.Run(ctx)
 
-	h := httpapi.NewHandler(connectionsSvc, collectSvc, cfg.StaticDir)
+	h := httpapi.NewHandler(
+		connectionsSvc,
+		collectSvc,
+		cfg.StaticDir,
+		cfg.IgnoreVPNListName,
+		cfg.IgnoreLanToVpnListName,
+	)
 	handler := cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
