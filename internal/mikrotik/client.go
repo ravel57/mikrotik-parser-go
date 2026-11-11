@@ -232,6 +232,38 @@ func (m *Client) InterfaceTraffic(ctx context.Context, iface string) (rxBitsPerS
 	return rxBitsPerSec, txBitsPerSec, nil
 }
 
+// DefaultRouteInterface returns the interface used by the active default
+// route (0.0.0.0/0), so callers don't need to hard-code a WAN interface
+// name, which varies a lot between RouterOS setups.
+func (m *Client) DefaultRouteInterface(ctx context.Context) (string, error) {
+	r, err := m.run(ctx, "/ip/route/print", "?dst-address=0.0.0.0/0")
+	if err != nil {
+		return "", err
+	}
+	rows := replyToMaps(r)
+
+	isActive := func(row map[string]string) bool {
+		v := strings.ToLower(strings.TrimSpace(row["active"]))
+		return v == "true" || v == "yes"
+	}
+
+	// Prefer a route RouterOS itself marks active; fall back to the first
+	// row with an interface if the "active" flag isn't present in the reply.
+	for _, row := range rows {
+		if isActive(row) {
+			if iface := strings.TrimSpace(row["interface"]); iface != "" {
+				return iface, nil
+			}
+		}
+	}
+	for _, row := range rows {
+		if iface := strings.TrimSpace(row["interface"]); iface != "" {
+			return iface, nil
+		}
+	}
+	return "", errors.New("no default route found")
+}
+
 func SplitDomainsCSV(s string) []string {
 	parts := strings.Split(s, ",")
 	out := make([]string, 0, len(parts))

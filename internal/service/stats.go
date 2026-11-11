@@ -98,8 +98,12 @@ func (s *StatsService) Get(ctx context.Context) (Stats, error) {
 		}
 	}
 
-	if strings.TrimSpace(s.statsInterface) != "" {
-		if rx, tx, err := s.mt.InterfaceTraffic(ctx, s.statsInterface); err == nil {
+	iface := strings.TrimSpace(s.statsInterface)
+	if iface == "" {
+		iface, _ = s.mt.DefaultRouteInterface(ctx)
+	}
+	if iface != "" {
+		if rx, tx, err := s.mt.InterfaceTraffic(ctx, iface); err == nil {
 			out.Network.DownloadBytesPerSec = rx / 8
 			out.Network.UploadBytesPerSec = tx / 8
 			out.Network.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
