@@ -40,12 +40,14 @@ func main() {
 
 	connectionsSvc := service.NewConnectionsService(mt, cfg.IgnoreVPNListName, cfg.IgnoreLanToVpnListName)
 	collectSvc := service.NewCollectService(connectionsSvc, pg, cfg.CollectInterval)
+	statsSvc := service.NewStatsService(connectionsSvc, mt, pg, cfg.IgnoreVPNListName, cfg.IgnoreLanToVpnListName, cfg.StatsInterface)
 
 	go collectSvc.Run(ctx)
 
 	h := httpapi.NewHandler(
 		connectionsSvc,
 		collectSvc,
+		statsSvc,
 		cfg.StaticDir,
 		cfg.IgnoreVPNListName,
 		cfg.IgnoreLanToVpnListName,

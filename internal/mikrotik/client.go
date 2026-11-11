@@ -3,6 +3,9 @@ package mikrotik
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -153,6 +156,80 @@ func (m *Client) AddressListAdd(ctx context.Context, listName, address string) e
 		"=address="+address,
 	)
 	return err
+}
+
+type SystemResource struct {
+	UptimeSeconds  float64
+	CPULoadPercent float64
+	TotalMemory    int64
+	FreeMemory     int64
+}
+
+func (m *Client) SystemResource(ctx context.Context) (SystemResource, error) {
+	r, err := m.run(ctx, "/system/resource/print")
+	if err != nil {
+		return SystemResource{}, err
+	}
+	rows := replyToMaps(r)
+	if len(rows) == 0 {
+		return SystemResource{}, errors.New("empty /system/resource/print reply")
+	}
+	row := rows[0]
+
+	var info SystemResource
+	info.UptimeSeconds = parseRouterOSUptime(row["uptime"])
+	info.CPULoadPercent, _ = strconv.ParseFloat(row["cpu-load"], 64)
+	info.TotalMemory, _ = strconv.ParseInt(row["total-memory"], 10, 64)
+	info.FreeMemory, _ = strconv.ParseInt(row["free-memory"], 10, 64)
+	return info, nil
+}
+
+var routerOSUptimePattern = regexp.MustCompile(`(\d+)(w|d|h|m|s)`)
+
+// parseRouterOSUptime turns a RouterOS uptime string such as "4w3d12h5m33s"
+// into a number of seconds.
+func parseRouterOSUptime(value string) float64 {
+	var total float64
+	for _, match := range routerOSUptimePattern.FindAllStringSubmatch(value, -1) {
+		n, err := strconv.ParseFloat(match[1], 64)
+		if err != nil {
+			continue
+		}
+		switch match[2] {
+		case "w":
+			total += n * 7 * 24 * 3600
+		case "d":
+			total += n * 24 * 3600
+		case "h":
+			total += n * 3600
+		case "m":
+			total += n * 60
+		case "s":
+			total += n
+		}
+	}
+	return total
+}
+
+// InterfaceTraffic returns the current rx/tx bitrate (bits per second) of the
+// given interface, using RouterOS's own live rate measurement.
+func (m *Client) InterfaceTraffic(ctx context.Context, iface string) (rxBitsPerSec, txBitsPerSec float64, err error) {
+	iface = strings.TrimSpace(iface)
+	if iface == "" {
+		return 0, 0, errors.New("interface name is not configured")
+	}
+	r, runErr := m.run(ctx, "/interface/monitor-traffic", "=interface="+iface, "=once=")
+	if runErr != nil {
+		return 0, 0, runErr
+	}
+	rows := replyToMaps(r)
+	if len(rows) == 0 {
+		return 0, 0, fmt.Errorf("empty /interface/monitor-traffic reply for %q", iface)
+	}
+	row := rows[0]
+	rxBitsPerSec, _ = strconv.ParseFloat(row["rx-bits-per-second"], 64)
+	txBitsPerSec, _ = strconv.ParseFloat(row["tx-bits-per-second"], 64)
+	return rxBitsPerSec, txBitsPerSec, nil
 }
 
 func SplitDomainsCSV(s string) []string {

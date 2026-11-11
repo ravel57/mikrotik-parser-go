@@ -17,6 +17,7 @@ type Config struct {
 
 	IgnoreVPNListName      string
 	IgnoreLanToVpnListName string
+	StatsInterface         string
 
 	CollectInterval time.Duration
 
@@ -64,6 +65,7 @@ func Load() Config {
 
 		IgnoreVPNListName:      ignoreList,
 		IgnoreLanToVpnListName: ignoreLanToVpn,
+		StatsInterface:         os.Getenv("APP_STATS_INTERFACE"),
 
 		CollectInterval: interval,
 

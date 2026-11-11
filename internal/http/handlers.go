@@ -15,6 +15,7 @@ import (
 type Handler struct {
 	connections            *service.ConnectionsService
 	collect                *service.CollectService
+	stats                  *service.StatsService
 	staticDir              string
 	ignoreVPNListName      string
 	ignoreLanToVpnListName string
@@ -23,6 +24,7 @@ type Handler struct {
 func NewHandler(
 	connections *service.ConnectionsService,
 	collect *service.CollectService,
+	stats *service.StatsService,
 	staticDir string,
 	ignoreVPNListName string,
 	ignoreLanToVpnListName string,
@@ -30,6 +32,7 @@ func NewHandler(
 	return &Handler{
 		connections:            connections,
 		collect:                collect,
+		stats:                  stats,
 		staticDir:              staticDir,
 		ignoreVPNListName:      ignoreVPNListName,
 		ignoreLanToVpnListName: ignoreLanToVpnListName,
@@ -53,6 +56,7 @@ func (h *Handler) Router() http.Handler {
 		r.Post("/dns", h.postDNS)                          // ?dns=&enabled=
 		r.Get("/ignore-lan-to-vpn", h.getIgnoreLanToVpn)   // ?find=
 		r.Post("/ignore-lan-to-vpn", h.postIgnoreLanToVpn) // JSON {ip, enabled}
+		r.Get("/stats", h.getStats)
 	})
 
 	// Frontend (как в Spring: "/" -> index, + /js/**, /css/**, /favicon.ico)
@@ -149,6 +153,15 @@ func (h *Handler) getIgnoreLanToVpn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, items)
+}
+
+func (h *Handler) getStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.stats.Get(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
 }
 
 func (h *Handler) postIgnoreLanToVpn(w http.ResponseWriter, r *http.Request) {
